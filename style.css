@@ -1,0 +1,35 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: rgb(242, 242, 242);
+}
+
+h1 {
+    color: rgb(66, 148, 182);
+}
+
+h2 {
+    color: rgb(66, 148, 182);
+}
+
+#drop-area {
+    border: 2px dashed rgb(44, 182, 99);
+    padding: 20px;
+    margin: 20px auto;
+    width: 80%;
+    max-width: 400px;
+    cursor: pointer;
+}
+
+#file-content {
+    color: rgb(0, 0, 0);
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    font-size: 20px;
+}
+
+.vector {
+    margin: 0 10px;
+}

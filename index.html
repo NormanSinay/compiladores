@@ -1,146 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Compiladores</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        text-align: center;
-      }
-      #drop-area {
-        border: 2px dashed #ccc;
-        padding: 20px;
-        margin: 20px auto;
-        width: 80%;
-        max-width: 400px;
-        cursor: pointer;
-      }
-      #file-content {
-        margin-top: 20px;
-        display: flex;
-        justify-content: center;
-        align-items: flex-start;
-      }
-      .vector {
-        margin: 0 10px;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Laboratorio Gramaticas</h1>
 
-    <div
-      id="drop-area"
-      ondrop="dropHandler(event);"
-      ondragover="dragOverHandler(event);"
-    >
-      <p>Arrastra y suelta un archivo TXT</p>
-      <input
-        type="file"
-        id="file-input"
-        style="display: none"
-        onchange="handleFile(this.files)"
-      />
-    </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compiladores</title>
+  <link rel="stylesheet" href="style.css">
+</head>
 
-    <div id="file-content"></div>
+<body>
+  <h1>Laboratorio Gramaticas</h1>
 
-    <script>
-      function dragOverHandler(event) {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = "copy";
-      }
+  <div id="drop-area" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
+    <p>Arrastra y suelta un archivo TXT</p>
+    <input type="file" id="file-input" style="display: none" onchange="handleFile(this.files)" />
+  </div>
 
-      function dropHandler(event) {
-        event.preventDefault();
-        const file = event.dataTransfer.files[0];
-        readFile(file);
-      }
+  <div id="file-content"></div>
 
-      function handleFile(files) {
-        const file = files[0];
-        readFile(file);
-      }
+  <script src="script.js"></script>
+</body>
 
-      function readFile(file) {
-        if (file.type.match("text.*")) {
-          const reader = new FileReader();
-          reader.onload = function (event) {
-            const content = event.target.result;
-            processContent(content);
-          };
-          reader.readAsText(file);
-        } else {
-          alert("Please drop a text file.");
-        }
-      }
-
-      function processContent(content) {
-        const lines = content.split("\n");
-        let variables = [];
-        let terminales = [];
-
-        lines.forEach((line) => {
-          if (line.trim() === "") return;
-
-          const parts = line.split(":");
-          if (parts.length !== 2) return;
-
-          const variable = parts[0].trim();
-          if (!isValidVariable(variable)) return;
-
-          if (!variables.includes(variable)) {
-            variables.push(variable);
-          }
-
-          const contentInsideQuotes = parts[1].match(/'[^']*'/g);
-          if (contentInsideQuotes) {
-            contentInsideQuotes.forEach((item) => {
-              const trimmedItem = item.replace(/'/g, "").trim();
-              if (
-                trimmedItem.toLowerCase() !== "e" &&
-                !terminales.includes(trimmedItem)
-              ) {
-                terminales.push(trimmedItem);
-              }
-            });
-          }
-
-          const variablesInsideLine = parts[1]
-            .split("|")
-            .map((v) => v.trim().split(":")[0].trim());
-          variablesInsideLine.forEach((v) => {
-            const trimmedVariable = v.trim();
-            if (
-              trimmedVariable !== "" &&
-              trimmedVariable !== variable &&
-              isValidVariable(trimmedVariable) &&
-              !variables.includes(trimmedVariable)
-            ) {
-              variables.push(trimmedVariable);
-            }
-          });
-        });
-
-        displayVectors(variables, terminales);
-      }
-
-      function isValidVariable(variable) {
-        return /^[A-Z][^:]*$/.test(variable);
-      }
-
-      function displayVectors(variables, terminales) {
-        const fileContentDiv = document.getElementById("file-content");
-        fileContentDiv.innerHTML =
-          '<div class="vector"><h2>Variables:</h2><pre>' +
-          variables.join("\n") +
-          "</pre></div>" +
-          '<div class="vector"><h2>Terminales:</h2><pre>' +
-          terminales.join("\n") +
-          "</pre></div>";
-      }
-    </script>
-  </body>
 </html>
