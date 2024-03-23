@@ -23,7 +23,7 @@ function readFile(file) {
     };
     reader.readAsText(file);
   } else {
-    alert("Please drop a text file.");
+    alert("Carga un archivo de texto.");
   }
 }
 
