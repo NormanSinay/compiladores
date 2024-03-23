@@ -50,7 +50,7 @@ function processContent(content) {
     if (contentInsideQuotes) {
       contentInsideQuotes.forEach((item) => {
         const trimmedItem = item.replace(/'/g, "").trim();
-        if (!terminales.includes(trimmedItem)) {
+        if (trimmedItem.toLowerCase() !== "e" && !terminales.includes(trimmedItem)) {
           terminales.push(trimmedItem);
         }
       });
