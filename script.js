@@ -23,7 +23,7 @@ function readFile(file) {
     };
     reader.readAsText(file);
   } else {
-    alert("Carga un archivo de texto.");
+    alert("Please drop a text file.");
   }
 }
 
@@ -46,14 +46,12 @@ function processContent(content) {
       variables.push(variable);
     }
 
-    const contentInsideQuotes = parts[1].match(/'[^']*'/g);
+    const contentInsideQuotes = parts[1].match(/'([^']+)'/g);
     if (contentInsideQuotes) {
       contentInsideQuotes.forEach((item) => {
         const trimmedItem = item.replace(/'/g, "").trim();
-        if (trimmedItem.toLowerCase() !== "e" && !isUpperCase(trimmedItem)) {
-          if (!terminales.includes(trimmedItem)) {
-            terminales.push(trimmedItem);
-          }
+        if (!terminales.includes(trimmedItem)) {
+          terminales.push(trimmedItem);
         }
       });
     }
@@ -74,7 +72,7 @@ function processContent(content) {
       }
     });
 
-    // Agregar la línea original al contenido original
+    // Agregar el contenido original
     originalContent += line + "\n";
   });
 
