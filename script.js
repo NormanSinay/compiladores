@@ -108,7 +108,7 @@ function displayVectors(variables, terminales, originalContent) {
     vector.style.border = "1px solid black";
     vector.style.padding = "10px";
     vector.style.margin = "10px";
-    vector.style.width = "calc(33.33% - 20px)"; // Ajustar el ancho según el diseño deseado
+    vector.style.width = "calc(33.33% - 20px)";
     vector.style.float = "left";
   });
 }
