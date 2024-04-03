@@ -88,41 +88,47 @@ function isValidVariable(variable) {
 function displayVectors(variables, terminals, originalContent) {
   const fileContentDiv = document.getElementById("file-content");
   fileContentDiv.innerHTML =
-    '<div class="vector"><h2>Original Content:</h2><pre>' +
+    '<div class="vector"><h4>Contenido Original</h4><pre>' +
     originalContent +
     "</pre></div>" +
-    '<div class="vector"><h2>Variables:</h2><pre>' +
+    '<div class="vector"><h4>Variables</h4><pre>' +
     variables.join("\n") +
     "</pre></div>" +
-    '<div class="vector"><h2>Terminals:</h2><pre>' +
+    '<div class="vector"><h4>Terminales</h4><pre>' +
     terminals.join("\n") +
     "</pre></div>" +
-    '<div class="vector"><h2>Transitions:</h2><pre>' +
-    generateTransitions(originalContent) +
-    "</pre></div>";
-
-  const vectors = document.querySelectorAll(".vector");
-  vectors.forEach((vector) => {
-    vector.style.border = "1px solid black";
-    vector.style.padding = "10px";
-    vector.style.margin = "10px";
-    vector.style.width = "calc(33.33% - 20px)";
-    vector.style.float = "left";
-  });
+    '<div class="vector"><h4>Producciones</h4>' +
+    generateTransitionsHTML(originalContent) +
+    "</div>";
 }
 
-function generateTransitions(originalContent) {
-  let transitions = "";
+function generateTransitionsHTML(originalContent) {
+  let transitionsHTML = '<div class="matrix">';
   const lines = originalContent.split("\n");
   lines.forEach((line) => {
     if (line.trim() === "") return;
     const parts = line.split(":");
     if (parts.length !== 2) return;
-    const variable = parts[0].trim();
-    const productions = parts[1].split("|");
-    productions.forEach((production) => {
-      transitions += variable + " -> " + production.trim() + "\n";
+    const leftPart = parts[0].trim();
+    const rightPart = parts[1].trim().split("|");
+    rightPart.forEach(item => {
+      const trimmedItem = item.replace(/'/g, "").trim();
+      transitionsHTML += '<div class="row">';
+      transitionsHTML += '<div class="column">' + leftPart + '</div>';
+      transitionsHTML += '<div class="column">' + trimmedItem + '</div>';
+      transitionsHTML += '</div>';
     });
   });
-  return transitions;
+  transitionsHTML += '</div>';
+  return transitionsHTML;
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  const dropArea = document.getElementById("drop-area");
+  dropArea.addEventListener("dragover", dragOverHandler);
+  dropArea.addEventListener("drop", dropHandler);
+  const fileInput = document.getElementById("file-input");
+  fileInput.addEventListener("change", (event) => {
+    handleFile(event.target.files);
+  });
+});
