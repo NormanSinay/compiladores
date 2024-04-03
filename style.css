@@ -27,10 +27,9 @@ h2 {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    font-size: 20px;
+    font-size: 25px;
 }
 
 .vector {
     margin: 0 10px;
-    
 }

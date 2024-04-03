@@ -1,0 +1,6 @@
+S:'e'
+S:S'a'
+S:S'b'
+S:'a'|'b'
+S1:a|r
+S2:Sa
