@@ -122,7 +122,7 @@ function generateLeftPartVector(originalContent) {
   let leftPartVectorHTML =
     '<div class="vector"><h4>Elementos antes de los dos puntos</h4><pre>';
   const lines = originalContent.split("\n");
-  const nonTerminals = new Set();
+  const nonTerminals = new Set(); // Utilizamos un conjunto para evitar duplicados
   
   lines.forEach((line) => {
     if (line.trim() === "") return;
@@ -169,44 +169,8 @@ function displayVectors(variables, terminals, originalContent, productions) {
     '<div class="vector"><h4>Gramática Sin Recursividad</h4>' +
     generateProductionsHTML(productions) +
     "</div>" +
-    generateLeftPartVector(originalContent) +
-    generateTerminalsVector(productions); // Agregamos el nuevo div para mostrar elementos terminales
+    generateLeftPartVector(originalContent);
 }
-
-function generateTerminalsVector(productions) {
-  const terminals = getTerminals(productions);
-  let terminalsHTML =
-    '<div class="vector"><h4>Elementos Terminales</h4><pre>';
-  terminals.forEach((terminal) => {
-    terminalsHTML += terminal + "\n";
-  });
-  terminalsHTML += "</pre></div>";
-  return terminalsHTML;
-}
-
-function getTerminals(productions) {
-  const terminals = new Set(); // Utilizamos un conjunto para evitar duplicados y facilitar la comprobación de existencia
-  Object.values(productions).forEach((productionsArray) => {
-    productionsArray.forEach((production) => {
-      const parts = production.split(":");
-      if (parts.length === 2) {
-        const rightPart = parts[1].trim();
-        // Buscamos elementos terminales después de los dos puntos
-        const terminalSymbols = rightPart.match(/([a-z!@#$%^&*()_+\-=[\]{};':"\\|,.<>?\/])/gi);
-        if (terminalSymbols) {
-          terminalSymbols.forEach((symbol) => {
-            // Excluimos el símbolo '!' de los elementos terminales
-            if (symbol !== "!") {
-              terminals.add(symbol);
-            }
-          });
-        }
-      }
-    });
-  });
-  return Array.from(terminals).sort(); // Convertimos el conjunto a un array y lo ordenamos alfabéticamente
-}
-
 
 function generateProductionsHTML(productions) {
   let productionsHTML = "<pre>";
