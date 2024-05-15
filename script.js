@@ -89,8 +89,10 @@ function displayVectors(variables, terminals, originalContent, productions) {
     "</div>" +
     '<div class="vector"><h4>Gramática Sin Recursividad</h4>' +
     generateProductionsHTML(productions) +
-    "</div>";
+    "</div>" +
+    '<div class="additional-vector" id="sin-recursion"><h4>Matriz Producciones Sin Recursividad por la Izquierda</h4><p>This is a new section parallel to "Grammar Without Recursion".</p></div>'; // New div added here
 }
+
 
 function generateMatrixHTML(originalContent) {
   let matrixHTML = '<div class="matrix">';
@@ -115,6 +117,9 @@ function generateMatrixHTML(originalContent) {
 
 function generateProductionsHTML(productions) {
   let productionsHTML = "<pre>";
+  let matrixHTML = '<div class="matrix">';
+  let matrixContent = "Matrix Without Recursion\n";
+
   Object.keys(productions).forEach((nonTerminal) => {
     const productionsArray = productions[nonTerminal];
     if (Array.isArray(productionsArray)) {
@@ -125,11 +130,30 @@ function generateProductionsHTML(productions) {
       });
       productionsHTML +=
         nonTerminal + ":" + productionsWithoutMarks.join(" | ") + "\n";
+
+      // Generating matrix HTML
+      productionsWithoutMarks.forEach((production) => {
+        const parts = production.split(":");
+        if (parts.length === 2) {
+          const leftPart = parts[0].trim();
+          const rightPart = parts[1].trim();
+          matrixContent += leftPart + " : " + rightPart + "\n";
+        }
+      });
     }
   });
+
   productionsHTML += "</pre>";
+  matrixHTML += "</div>";
+
+  // Appending matrix HTML to existing div with id "file-content"
+  const fileContentDiv = document.getElementById("file-content");
+  fileContentDiv.innerHTML +=
+    productionsHTML + '<div class="matrix-container">' + matrixContent + '</div>';
+
   return productionsHTML;
 }
+
 
 
 function eliminateLeftRecursion(productions) {
@@ -190,7 +214,6 @@ function eliminateLeftRecursion(productions) {
   }
   return productions;
 }
-
 
 document.addEventListener("DOMContentLoaded", () => {
   const dropArea = document.getElementById("drop-area");
