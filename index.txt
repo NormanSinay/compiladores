@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compiladores</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <h1>Laboratorio Gramaticas</h1>
+
+  <div id="drop-area" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
+    <p>Arrastra y suelta un archivo TXT</p>
+    <input type="file" id="file-input" style="display: none" onchange="handleFile(this.files)" />
+  </div>
+
+  <div id="file-content"></div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>

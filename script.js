@@ -32,6 +32,7 @@ function processContent(content) {
   let variables = [];
   let terminals = [];
   let originalContent = "";
+  let productions = {};
   lines.forEach((line) => {
     if (line.trim() === "") return;
     const parts = line.split(":");
@@ -52,29 +53,15 @@ function processContent(content) {
       });
     }
 
-    const variablesInsideLine = parts[1]
-      .split("|")
-      .map((v) => v.trim().split(":")[0].trim());
-    variablesInsideLine.forEach((v) => {
-      const trimmedVariable = v.trim();
-      const variableParts = trimmedVariable.split("S");
-      variableParts.forEach((part) => {
-        const validPart = part.replace(/[^\w|']/g, "");
-        if (
-          validPart !== "" &&
-          validPart !== variable &&
-          isValidVariable(validPart) &&
-          !variables.includes(validPart) &&
-          !isUpperCase(validPart)
-        ) {
-          variables.push(validPart);
-        }
-      });
-    });
+    const productionsArray = parts[1].split("|").map((v) => v.trim());
+    productions[variable] = productionsArray;
     originalContent += line + "\n";
   });
 
-  displayVectors(variables, terminals, originalContent);
+  // Call function to eliminate left recursion
+  productions = eliminateLeftRecursion(productions);
+
+  displayVectors(variables, terminals, originalContent, productions);
 }
 
 function isUpperCase(str) {
@@ -85,7 +72,7 @@ function isValidVariable(variable) {
   return /^[A-Z][^:]*$/.test(variable);
 }
 
-function displayVectors(variables, terminals, originalContent) {
+function displayVectors(variables, terminals, originalContent, productions) {
   const fileContentDiv = document.getElementById("file-content");
   fileContentDiv.innerHTML =
     '<div class="vector"><h4>Contenido Original</h4><pre>' +
@@ -98,12 +85,15 @@ function displayVectors(variables, terminals, originalContent) {
     terminals.join("\n") +
     "</pre></div>" +
     '<div class="vector"><h4>Producciones</h4>' +
-    generateTransitionsHTML(originalContent) +
+    generateMatrixHTML(originalContent) +
+    "</div>" +
+    '<div class="vector"><h4>Gramática Sin Recursividad</h4>' +
+    generateProductionsHTML(productions) +
     "</div>";
 }
 
-function generateTransitionsHTML(originalContent) {
-  let transitionsHTML = '<div class="matrix">';
+function generateMatrixHTML(originalContent) {
+  let matrixHTML = '<div class="matrix">';
   const lines = originalContent.split("\n");
   lines.forEach((line) => {
     if (line.trim() === "") return;
@@ -111,17 +101,96 @@ function generateTransitionsHTML(originalContent) {
     if (parts.length !== 2) return;
     const leftPart = parts[0].trim();
     const rightPart = parts[1].trim().split("|");
-    rightPart.forEach(item => {
+    rightPart.forEach((item) => {
       const trimmedItem = item.replace(/'/g, "").trim();
-      transitionsHTML += '<div class="row">';
-      transitionsHTML += '<div class="column">' + leftPart + '</div>';
-      transitionsHTML += '<div class="column">' + trimmedItem + '</div>';
-      transitionsHTML += '</div>';
+      matrixHTML += '<div class="row">';
+      matrixHTML += '<div class="column">' + leftPart + "</div>";
+      matrixHTML += '<div class="column">' + trimmedItem + "</div>";
+      matrixHTML += "</div>";
     });
   });
-  transitionsHTML += '</div>';
-  return transitionsHTML;
+  matrixHTML += "</div>";
+  return matrixHTML;
 }
+
+function generateProductionsHTML(productions) {
+  let productionsHTML = "<pre>";
+  Object.keys(productions).forEach((nonTerminal) => {
+    const productionsArray = productions[nonTerminal];
+    if (Array.isArray(productionsArray)) {
+      const productionsWithoutMarks = productionsArray.map((production) => {
+        // Replace single quotes with ! for uppercase characters before the colon
+        // Remove single quotes for lowercase characters before the colon
+        return production.replace(/([A-Z])'|([a-z])'/g, "$1!$2");
+      });
+      productionsHTML +=
+        nonTerminal + ":" + productionsWithoutMarks.join(" | ") + "\n";
+    }
+  });
+  productionsHTML += "</pre>";
+  return productionsHTML;
+}
+
+
+function eliminateLeftRecursion(productions) {
+  const nonTerminals = Object.keys(productions);
+  for (let i = 0; i < nonTerminals.length; i++) {
+    const Ai = nonTerminals[i];
+    for (let j = 0; j < i; j++) {
+      const Aj = nonTerminals[j];
+      const AiProductions = productions[Ai];
+      const AjProductions = productions[Aj];
+      if (AiProductions && AjProductions) {
+        const newProductions = [];
+        const remainingProductions = [];
+        AiProductions.forEach((production) => {
+          if (production.startsWith(Aj)) {
+            const gamma = production.substring(Aj.length);
+            if (gamma === "") {
+              // Case 1: Empty production, add epsilon
+              newProductions.push("!");
+            } else {
+              AjProductions.forEach((AjProduction) => {
+                newProductions.push(AjProduction + gamma);
+              });
+            }
+          } else {
+            remainingProductions.push(production);
+          }
+        });
+        productions[Ai] = remainingProductions.concat(newProductions);
+      }
+    }
+    // Remove immediate left recursion from Ai productions
+    const AiProductions = productions[Ai];
+    const newProductions = [];
+    const alphaProductions = [];
+    AiProductions.forEach((production) => {
+      if (production.startsWith(Ai)) {
+        const alpha = production.substring(Ai.length);
+        if (alpha === "") {
+          // Case 2: Derives epsilon, add epsilon
+          newProductions.push("!");
+        } else {
+          alphaProductions.push(alpha);
+        }
+      } else {
+        newProductions.push(production);
+      }
+    });
+    if (alphaProductions.length > 0) {
+      const primeVariable = Ai + "'";
+      productions[primeVariable] = alphaProductions.map(
+        (alpha) => alpha + primeVariable
+      );
+      productions[Ai] = newProductions.map(
+        (production) => production + primeVariable
+      );
+    }
+  }
+  return productions;
+}
+
 
 document.addEventListener("DOMContentLoaded", () => {
   const dropArea = document.getElementById("drop-area");

@@ -1,0 +1,135 @@
+function dragOverHandler(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+  }
+  
+  function dropHandler(event) {
+    event.preventDefault();
+    const file = event.dataTransfer.files[0];
+    readFile(file);
+  }
+  
+  function handleFile(files) {
+    const file = files[0];
+    readFile(file);
+  }
+  
+  function readFile(file) {
+    if (file.type.match("text.*")) {
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const content = event.target.result;
+        processContent(content);
+      };
+      reader.readAsText(file);
+    } else {
+      alert("Please drop a text file.");
+    }
+  }
+  
+  function processContent(content) {
+    const lines = content.split("\n");
+    let variables = [];
+    let terminals = [];
+    let originalContent = "";
+    lines.forEach((line) => {
+      if (line.trim() === "") return;
+      const parts = line.split(":");
+      if (parts.length !== 2) return;
+      const variable = parts[0].trim();
+      if (!isValidVariable(variable)) return;
+      if (!variables.includes(variable)) {
+        variables.push(variable);
+      }
+  
+      const contentInsideQuotes = parts[1].match(/'([^']+)'/g);
+      if (contentInsideQuotes) {
+        contentInsideQuotes.forEach((item) => {
+          const trimmedItem = item.replace(/'/g, "").trim();
+          if (!terminals.includes(trimmedItem)) {
+            terminals.push(trimmedItem);
+          }
+        });
+      }
+  
+      const variablesInsideLine = parts[1]
+        .split("|")
+        .map((v) => v.trim().split(":")[0].trim());
+      variablesInsideLine.forEach((v) => {
+        const trimmedVariable = v.trim();
+        const variableParts = trimmedVariable.split("S");
+        variableParts.forEach((part) => {
+          const validPart = part.replace(/[^\w|']/g, "");
+          if (
+            validPart !== "" &&
+            validPart !== variable &&
+            isValidVariable(validPart) &&
+            !variables.includes(validPart) &&
+            !isUpperCase(validPart)
+          ) {
+            variables.push(validPart);
+          }
+        });
+      });
+      originalContent += line + "\n";
+    });
+  
+    displayVectors(variables, terminals, originalContent);
+  }
+  
+  function isUpperCase(str) {
+    return str === str.toUpperCase();
+  }
+  
+  function isValidVariable(variable) {
+    return /^[A-Z][^:]*$/.test(variable);
+  }
+  
+  function displayVectors(variables, terminals, originalContent) {
+    const fileContentDiv = document.getElementById("file-content");
+    fileContentDiv.innerHTML =
+      '<div class="vector"><h4>Contenido Original</h4><pre>' +
+      originalContent +
+      "</pre></div>" +
+      '<div class="vector"><h4>Variables</h4><pre>' +
+      variables.join("\n") +
+      "</pre></div>" +
+      '<div class="vector"><h4>Terminales</h4><pre>' +
+      terminals.join("\n") +
+      "</pre></div>" +
+      '<div class="vector"><h4>Producciones</h4>' +
+      generateTransitionsHTML(originalContent) +
+      "</div>";
+  }
+  
+  function generateTransitionsHTML(originalContent) {
+    let transitionsHTML = '<div class="matrix">';
+    const lines = originalContent.split("\n");
+    lines.forEach((line) => {
+      if (line.trim() === "") return;
+      const parts = line.split(":");
+      if (parts.length !== 2) return;
+      const leftPart = parts[0].trim();
+      const rightPart = parts[1].trim().split("|");
+      rightPart.forEach(item => {
+        const trimmedItem = item.replace(/'/g, "").trim();
+        transitionsHTML += '<div class="row">';
+        transitionsHTML += '<div class="column">' + leftPart + '</div>';
+        transitionsHTML += '<div class="column">' + trimmedItem + '</div>';
+        transitionsHTML += '</div>';
+      });
+    });
+    transitionsHTML += '</div>';
+    return transitionsHTML;
+  }
+  
+  document.addEventListener("DOMContentLoaded", () => {
+    const dropArea = document.getElementById("drop-area");
+    dropArea.addEventListener("dragover", dragOverHandler);
+    dropArea.addEventListener("drop", dropHandler);
+    const fileInput = document.getElementById("file-input");
+    fileInput.addEventListener("change", (event) => {
+      handleFile(event.target.files);
+    });
+  });
+  
