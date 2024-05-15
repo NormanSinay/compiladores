@@ -203,7 +203,7 @@ function eliminateLeftRecursion(productions) {
       }
     });
     if (alphaProductions.length > 0) {
-      const primeVariable = Ai + "'";
+      const primeVariable = Ai + "!";
       productions[primeVariable] = alphaProductions.map(
         (alpha) => alpha + primeVariable
       );
