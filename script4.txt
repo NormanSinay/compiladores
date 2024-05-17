@@ -55,14 +55,15 @@ function processContent(content) {
 
     const productionsArray = parts[1]
       .split("|")
-      .map((v) => v.replace(/'/g, "").trim());
+      .map((v) => v.replace(/'/g, "").trim()); // Eliminar comillas simples aquí
     productions[variable] = productionsArray;
     originalContent += line + "\n";
   });
 
-  const updatedProductions = eliminateLeftRecursion(productions);
+  // Call function to eliminate left recursion
+  productions = eliminateLeftRecursion(productions);
 
-  displayVectors(variables, terminals, originalContent, productions, updatedProductions);
+  displayVectors(variables, terminals, originalContent, productions);
 }
 
 function isUpperCase(str) {
@@ -73,7 +74,7 @@ function isValidVariable(variable) {
   return /^[A-Z][^:]*$/.test(variable);
 }
 
-function displayVectors(variables, terminals, originalContent, productions, updatedProductions) {
+function displayVectors(variables, terminals, originalContent, productions) {
   const fileContentDiv = document.getElementById("file-content");
   fileContentDiv.innerHTML =
     '<div class="vector"><h4>Contenido Original</h4><pre>' +
@@ -86,32 +87,23 @@ function displayVectors(variables, terminals, originalContent, productions, upda
     terminals.join("\n") +
     "</pre></div>" +
     '<div class="vector"><h4>Producciones</h4>' +
-    generateMatrixHTMLFromOriginalContent(originalContent) +
+    generateMatrixHTML(productions) +
     "</div>" +
     '<div class="vector"><h4>Gramática Sin Recursividad</h4>' +
-    generateProductionsHTML(updatedProductions) +
+    generateProductionsHTML(productions) +
     "</div>" +
-    generateLeftPartVectorFromProductions(updatedProductions) +
-    generateTerminalsVector(updatedProductions) +
-    '<div class="vector"><h4>Producciones Sin Recursividad</h4>' +
-    generateMatrixHTML(updatedProductions) +
-    "</div>";
+    generateLeftPartVectorFromProductions(productions) + // Actualizado para usar producciones después de eliminar recursividad
+    generateTerminalsVector(productions);
 }
 
-function generateMatrixHTMLFromOriginalContent(originalContent) {
+function generateMatrixHTML(productions) {
   let matrixHTML = '<div class="matrix">';
-  const lines = originalContent.split("\n");
-  lines.forEach((line) => {
-    if (line.trim() === "") return;
-    const parts = line.split(":");
-    if (parts.length !== 2) return;
-    const leftPart = parts[0].trim();
-    const rightPart = parts[1].trim().split("|");
-    rightPart.forEach((item) => {
-      const trimmedItem = item.replace(/'/g, "").trim(); // Eliminar comillas simples
+  Object.keys(productions).forEach((leftPart) => {
+    const rightParts = productions[leftPart];
+    rightParts.forEach((rightPart) => {
       matrixHTML += '<div class="row">';
       matrixHTML += '<div class="column">' + leftPart + "</div>";
-      matrixHTML += '<div class="column">' + trimmedItem + "</div>";
+      matrixHTML += '<div class="column">' + rightPart + "</div>";
       matrixHTML += "</div>";
     });
   });
@@ -121,9 +113,10 @@ function generateMatrixHTMLFromOriginalContent(originalContent) {
 
 function generateLeftPartVectorFromProductions(productions) {
   let leftPartVectorHTML =
-    '<div class="vector"><h4>Variables</h4><pre>';
+    '<div class="vector"><h4>Elementos antes de los dos puntos</h4><pre>';
   const nonTerminals = new Set(Object.keys(productions));
 
+  // Convertimos el conjunto a un array y lo ordenamos alfabéticamente
   const uniqueNonTerminals = Array.from(nonTerminals).sort();
   uniqueNonTerminals.forEach((element) => {
     leftPartVectorHTML += element + "\n";
@@ -136,7 +129,7 @@ function generateLeftPartVectorFromProductions(productions) {
 function generateTerminalsVector(productions) {
   const terminals = getTerminals(productions);
   let terminalsHTML =
-    '<div class="vector"><h4>Terminales</h4><pre>';
+    '<div class="vector"><h4>Elementos Terminales</h4><pre>';
   terminals.forEach((terminal) => {
     terminalsHTML += terminal + "\n";
   });
@@ -170,22 +163,6 @@ function generateProductionsHTML(productions) {
   });
   productionsHTML += "</pre>";
   return productionsHTML;
-}
-
-function generateMatrixHTML(productions) {
-  let matrixHTML = '<div class="matrix">';
-  Object.keys(productions).forEach((nonTerminal) => {
-    const rightPart = productions[nonTerminal];
-    rightPart.forEach((production) => {
-      const trimmedItem = production.trim();
-      matrixHTML += '<div class="row">';
-      matrixHTML += '<div class="column">' + nonTerminal + "</div>";
-      matrixHTML += '<div class="column">' + trimmedItem + "</div>";
-      matrixHTML += "</div>";
-    });
-  });
-  matrixHTML += "</div>";
-  return matrixHTML;
 }
 
 function eliminateLeftRecursion(productions) {

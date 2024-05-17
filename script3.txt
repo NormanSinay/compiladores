@@ -53,16 +53,15 @@ function processContent(content) {
       });
     }
 
-    const productionsArray = parts[1]
-      .split("|")
-      .map((v) => v.replace(/'/g, "").trim());
+    const productionsArray = parts[1].split("|").map((v) => v.trim());
     productions[variable] = productionsArray;
     originalContent += line + "\n";
   });
 
-  const updatedProductions = eliminateLeftRecursion(productions);
+  // Call function to eliminate left recursion
+  productions = eliminateLeftRecursion(productions);
 
-  displayVectors(variables, terminals, originalContent, productions, updatedProductions);
+  displayVectors(variables, terminals, originalContent, productions);
 }
 
 function isUpperCase(str) {
@@ -73,7 +72,81 @@ function isValidVariable(variable) {
   return /^[A-Z][^:]*$/.test(variable);
 }
 
-function displayVectors(variables, terminals, originalContent, productions, updatedProductions) {
+function displayVectors(variables, terminals, originalContent, productions) {
+  const fileContentDiv = document.getElementById("file-content");
+  const leftPartVectorHTML = generateLeftPartVector(originalContent); // Genera el HTML del vector de partes izquierdas
+  
+  // Concatena el HTML del vector de partes izquierdas con el contenido existente en fileContentDiv
+  fileContentDiv.innerHTML += 
+    '<div class="vector"><h4>Contenido Original</h4><pre>' +
+    originalContent +
+    "</pre></div>" +
+    '<div class="vector"><h4>Variables</h4><pre>' +
+    variables.join("\n") +
+    "</pre></div>" +
+    '<div class="vector"><h4>Terminales</h4><pre>' +
+    terminals.join("\n") +
+    "</pre></div>" +
+    '<div class="vector"><h4>Producciones</h4>' +
+    generateMatrixHTML(originalContent) +
+    "</div>" +
+    '<div class="vector"><h4>Gramática Sin Recursividad</h4>' +
+    generateProductionsHTML(productions) +
+    "</div>" +
+    leftPartVectorHTML; // Agrega el HTML del vector de partes izquierdas al contenido existente
+}
+
+
+function generateMatrixHTML(originalContent) {
+  let matrixHTML = '<div class="matrix">';
+  const lines = originalContent.split("\n");
+  lines.forEach((line) => {
+    if (line.trim() === "") return;
+    const parts = line.split(":");
+    if (parts.length !== 2) return;
+    const leftPart = parts[0].trim();
+    const rightPart = parts[1].trim().split("|");
+    rightPart.forEach((item) => {
+      const trimmedItem = item.replace(/'/g, "").trim();
+      matrixHTML += '<div class="row">';
+      matrixHTML += '<div class="column">' + leftPart + "</div>";
+      matrixHTML += '<div class="column">' + trimmedItem + "</div>";
+      matrixHTML += "</div>";
+    });
+  });
+  matrixHTML += "</div>";
+  return matrixHTML;
+}
+
+function generateLeftPartVector(originalContent) {
+  let leftPartVectorHTML =
+    '<div class="vector"><h4>Elementos antes de los dos puntos</h4><pre>';
+  const lines = originalContent.split("\n");
+  const nonTerminals = new Set();
+  
+  lines.forEach((line) => {
+    if (line.trim() === "") return;
+    const parts = line.split(":");
+    if (parts.length !== 2) return;
+    const leftPart = parts[0].trim();
+    const leftPartElements = leftPart.split(/\s+/); // Dividir por espacios
+    leftPartElements.forEach((element) => {
+      // Agregamos el símbolo no terminal al conjunto
+      nonTerminals.add(element);
+    });
+  });
+
+  // Convertimos el conjunto a un array y lo ordenamos alfabéticamente
+  const uniqueNonTerminals = Array.from(nonTerminals).sort();
+  uniqueNonTerminals.forEach((element) => {
+    leftPartVectorHTML += element + "\n";
+  });
+
+  leftPartVectorHTML += "</pre></div>";
+  return leftPartVectorHTML;
+}
+
+function displayVectors(variables, terminals, originalContent, productions) {
   const fileContentDiv = document.getElementById("file-content");
   fileContentDiv.innerHTML =
     '<div class="vector"><h4>Contenido Original</h4><pre>' +
@@ -86,57 +159,19 @@ function displayVectors(variables, terminals, originalContent, productions, upda
     terminals.join("\n") +
     "</pre></div>" +
     '<div class="vector"><h4>Producciones</h4>' +
-    generateMatrixHTMLFromOriginalContent(originalContent) +
+    generateMatrixHTML(originalContent) +
     "</div>" +
     '<div class="vector"><h4>Gramática Sin Recursividad</h4>' +
-    generateProductionsHTML(updatedProductions) +
+    generateProductionsHTML(productions) +
     "</div>" +
-    generateLeftPartVectorFromProductions(updatedProductions) +
-    generateTerminalsVector(updatedProductions) +
-    '<div class="vector"><h4>Producciones Sin Recursividad</h4>' +
-    generateMatrixHTML(updatedProductions) +
-    "</div>";
-}
-
-function generateMatrixHTMLFromOriginalContent(originalContent) {
-  let matrixHTML = '<div class="matrix">';
-  const lines = originalContent.split("\n");
-  lines.forEach((line) => {
-    if (line.trim() === "") return;
-    const parts = line.split(":");
-    if (parts.length !== 2) return;
-    const leftPart = parts[0].trim();
-    const rightPart = parts[1].trim().split("|");
-    rightPart.forEach((item) => {
-      const trimmedItem = item.replace(/'/g, "").trim(); // Eliminar comillas simples
-      matrixHTML += '<div class="row">';
-      matrixHTML += '<div class="column">' + leftPart + "</div>";
-      matrixHTML += '<div class="column">' + trimmedItem + "</div>";
-      matrixHTML += "</div>";
-    });
-  });
-  matrixHTML += "</div>";
-  return matrixHTML;
-}
-
-function generateLeftPartVectorFromProductions(productions) {
-  let leftPartVectorHTML =
-    '<div class="vector"><h4>Variables</h4><pre>';
-  const nonTerminals = new Set(Object.keys(productions));
-
-  const uniqueNonTerminals = Array.from(nonTerminals).sort();
-  uniqueNonTerminals.forEach((element) => {
-    leftPartVectorHTML += element + "\n";
-  });
-
-  leftPartVectorHTML += "</pre></div>";
-  return leftPartVectorHTML;
+    generateLeftPartVector(originalContent) +
+    generateTerminalsVector(productions); // Agregamos el nuevo div para mostrar elementos terminales
 }
 
 function generateTerminalsVector(productions) {
   const terminals = getTerminals(productions);
   let terminalsHTML =
-    '<div class="vector"><h4>Terminales</h4><pre>';
+    '<div class="vector"><h4>Elementos Terminales</h4><pre>';
   terminals.forEach((terminal) => {
     terminalsHTML += terminal + "\n";
   });
@@ -145,47 +180,68 @@ function generateTerminalsVector(productions) {
 }
 
 function getTerminals(productions) {
-  const terminals = new Set();
+  const terminals = new Set(); // Utilizamos un conjunto para evitar duplicados y facilitar la comprobación de existencia
   Object.values(productions).forEach((productionsArray) => {
     productionsArray.forEach((production) => {
-      const parts = production.split(/\s+/);
-      parts.forEach((part) => {
-        if (!/^[A-Z][A-Z0-9]*[!]*$/.test(part)) {
-          terminals.add(part);
+      const parts = production.split(":");
+      if (parts.length === 2) {
+        const rightPart = parts[1].trim();
+        // Buscamos elementos terminales después de los dos puntos
+        const terminalSymbols = rightPart.match(/([a-z!@#$%^&*()_+\-=[\]{};':"\\|,.<>?\/])/gi);
+        if (terminalSymbols) {
+          terminalSymbols.forEach((symbol) => {
+            // Excluimos el símbolo '!' de los elementos terminales
+            if (symbol !== "!") {
+              terminals.add(symbol);
+            }
+          });
         }
-      });
+      }
     });
   });
-  return Array.from(terminals).sort();
+  return Array.from(terminals).sort(); // Convertimos el conjunto a un array y lo ordenamos alfabéticamente
 }
+
 
 function generateProductionsHTML(productions) {
   let productionsHTML = "<pre>";
+  let matrixHTML = '<div class="matrix">';
+  let matrixContent = "Matrix Without Recursion\n";
+
   Object.keys(productions).forEach((nonTerminal) => {
     const productionsArray = productions[nonTerminal];
     if (Array.isArray(productionsArray)) {
+      const productionsWithMarks = productionsArray.map((production) => {
+        // Reemplazar comillas simples solo antes de los dos puntos en los símbolos no terminales
+        let updatedProduction = production.replace(/([A-Z])'(?=.*:)/g, "$1!");
+        updatedProduction = updatedProduction.replace(/'([^']*)'/g, "$1");
+        return updatedProduction;
+      });
       productionsHTML +=
-        nonTerminal + " : " + productionsArray.join(" | ") + "\n";
+        nonTerminal + ":" + productionsWithMarks.join(" | ") + "\n";
+
+      // Generar contenido de la matriz
+      productionsWithMarks.forEach((production) => {
+        const parts = production.split(":");
+        if (parts.length === 2) {
+          const leftPart = parts[0].trim();
+          const rightPart = parts[1].trim();
+          matrixContent += leftPart + " : " + rightPart + "\n";
+        }
+      });
     }
   });
-  productionsHTML += "</pre>";
-  return productionsHTML;
-}
 
-function generateMatrixHTML(productions) {
-  let matrixHTML = '<div class="matrix">';
-  Object.keys(productions).forEach((nonTerminal) => {
-    const rightPart = productions[nonTerminal];
-    rightPart.forEach((production) => {
-      const trimmedItem = production.trim();
-      matrixHTML += '<div class="row">';
-      matrixHTML += '<div class="column">' + nonTerminal + "</div>";
-      matrixHTML += '<div class="column">' + trimmedItem + "</div>";
-      matrixHTML += "</div>";
-    });
-  });
+  productionsHTML += "</pre>";
   matrixHTML += "</div>";
-  return matrixHTML;
+  const fileContentDiv = document.getElementById("file-content");
+  fileContentDiv.innerHTML +=
+    productionsHTML +
+    '<div class="matrix-container">' +
+    matrixContent +
+    "</div>";
+
+  return productionsHTML;
 }
 
 function eliminateLeftRecursion(productions) {
@@ -203,6 +259,7 @@ function eliminateLeftRecursion(productions) {
           if (production.startsWith(Aj)) {
             const gamma = production.substring(Aj.length);
             if (gamma === "") {
+              // Case 1: Empty production, add epsilon
               newProductions.push("!");
             } else {
               AjProductions.forEach((AjProduction) => {
@@ -216,6 +273,7 @@ function eliminateLeftRecursion(productions) {
         productions[Ai] = remainingProductions.concat(newProductions);
       }
     }
+    // Remove immediate left recursion from Ai productions
     const AiProductions = productions[Ai];
     const newProductions = [];
     const alphaProductions = [];
@@ -223,6 +281,7 @@ function eliminateLeftRecursion(productions) {
       if (production.startsWith(Ai)) {
         const alpha = production.substring(Ai.length);
         if (alpha === "") {
+          // Case 2: Derives epsilon, add epsilon
           newProductions.push("!");
         } else {
           alphaProductions.push(alpha);
