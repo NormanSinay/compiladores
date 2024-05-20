@@ -20,7 +20,6 @@ function readFile(file) {
     reader.onload = function (event) {
       const content = event.target.result;
       processContent(content);
-      hideDropArea();
     };
     reader.readAsText(file);
   } else {
@@ -243,13 +242,6 @@ function eliminateLeftRecursion(productions) {
     }
   }
   return productions;
-}
-
-function hideDropArea() {
-  const dropArea = document.getElementById("drop-area");
-  dropArea.style.display = "none";
-  const fileContentDiv = document.getElementById("file-content");
-  fileContentDiv.style.marginTop = "0"; // Ajustar el margen superior para subir el contenido
 }
 
 document.addEventListener("DOMContentLoaded", () => {
